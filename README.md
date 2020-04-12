@@ -20,7 +20,7 @@ One of the primary goals of this project is to be able to run on a free heroku d
 1. Create a heroku app
 2. Run `make heroku-all APP={name-of-heroku-app}`
 
-I like to then run `heroku logs -t --app={name-of-heroku-app}` to make sure the deploy was successful. You should now be able to hit `https://{name-of-heroku-app}.herokuapp.com/Games/ById?id=1` to test.
+I like to then run `heroku logs -t --app={name-of-heroku-app}` to make sure the deploy was successful. You should now be able to hit `https://{name-of-heroku-app}.herokuapp.com/Games/ByIds?ids=1` to test.
 
 ## Architecture
 

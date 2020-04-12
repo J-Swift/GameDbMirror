@@ -37,9 +37,19 @@ cross-compile-all:
 .PHONY: cross-compile-all
 
 cross-compile: ensure-goos ensure-goarch
-	@echo Compiling main-$(GOOS)-$(GOARCH)
-	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o out/main-$(GOOS)-$(GOARCH) main.go
+	$(MAKE) cross-compile-server GOOS=$(GOOS) GOARCH=$(GOARCH)
+	$(MAKE) cross-compile-fetch GOOS=$(GOOS) GOARCH=$(GOARCH)
 .PHONY: cross-compile
+
+cross-compile-server: ensure-goos ensure-goarch
+	@echo Compiling server-$(GOOS)-$(GOARCH)
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o out/server-$(GOOS)-$(GOARCH) cmd/server/main.go
+.PHONY: cross-compile-server
+
+cross-compile-fetch: ensure-goos ensure-goarch
+	@echo Compiling fetch-$(GOOS)-$(GOARCH)
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o out/fetch-$(GOOS)-$(GOARCH) cmd/fetch/main.go
+.PHONY: cross-compile-fetch
 
 ################################################################################
 # Helpers

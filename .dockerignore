@@ -1,0 +1,9 @@
+.git
+.dockerignore
+Dockerfile
+Dockerfile.*
+
+out/
+
+.fetch-cache
+!.fetch-cache/_clean.json

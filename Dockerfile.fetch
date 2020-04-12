@@ -1,0 +1,26 @@
+################################################################################
+# Build container
+################################################################################
+
+FROM golang:alpine AS builder
+
+ENV BUILD_PACKAGES="make ca-certificates"
+
+RUN apk add --no-cache --update --upgrade $BUILD_PACKAGES \
+    && rm -rf /var/cache/apk/* \
+    && mkdir /app
+
+WORKDIR /app
+ADD . .
+RUN make cross-compile GOOS=linux GOARCH=amd64
+
+
+################################################################################
+# Runtime container
+################################################################################
+
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /app/out/fetch-linux-amd64 ./fetch
+ENTRYPOINT ["/fetch"]

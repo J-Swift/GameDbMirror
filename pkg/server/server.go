@@ -16,13 +16,14 @@ import (
 )
 
 const (
-	parsedDumpFilePath = "out/_clean.json"
+	parsedDumpFilePath = "_clean.json"
 )
 
 var db *repo.Repo
 
-func init() {
-	games := parse()
+func prepare(dataDir string) {
+	filepath := dataDir + "/" + parsedDumpFilePath
+	games := parse(filepath)
 	db = repo.New(games)
 }
 
@@ -32,10 +33,10 @@ func check(e error) {
 	}
 }
 
-func parse() []model.Game {
+func parse(dataFilepath string) []model.Game {
 	fmt.Println("Parsing games")
 
-	cachedGames, err := ioutil.ReadFile(parsedDumpFilePath)
+	cachedGames, err := ioutil.ReadFile(dataFilepath)
 	check(err)
 
 	var result []model.Game
@@ -96,8 +97,10 @@ func jsonContentMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func Run(port string, maxResultsPerRequest int) {
-	fmt.Println("Initializing")
+func Run(dataDir string, port string, maxResultsPerRequest int) {
+	prepare(dataDir)
+
+	fmt.Println("Initializing router")
 
 	r := mux.NewRouter()
 	r.Use(jsonContentMiddleware)

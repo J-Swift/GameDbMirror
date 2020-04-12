@@ -12,12 +12,11 @@ import (
 )
 
 const (
-	metaFilePath = "out/_meta.json"
+	metaFilePath       = "_meta.json"
+	parsedDumpFilePath = "_clean.json"
+	dbDumpFilePath     = "_dump.json"
 
-	dbDumpFilePath = "out/_dump.json"
-	dbDumpURL      = "https://cdn.thegamesdb.net/json/database-latest.json"
-
-	parsedDumpFilePath = "out/_clean.json"
+	dbDumpURL = "https://cdn.thegamesdb.net/json/database-latest.json"
 )
 
 type dataFetchMeta struct {
@@ -41,15 +40,15 @@ func check(e error) {
 	}
 }
 
-func readMeta() dataFetchMeta {
+func readMeta(filepath string) dataFetchMeta {
 	fmt.Println("Reading meta")
 
-	if _, err := os.Stat(metaFilePath); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		fmt.Println("  -> no meta found")
 		return newMeta()
 	}
 
-	res, err := ioutil.ReadFile(metaFilePath)
+	res, err := ioutil.ReadFile(filepath)
 	check(err)
 
 	var meta dataFetchMeta
@@ -65,19 +64,19 @@ func readMeta() dataFetchMeta {
 	return meta
 }
 
-func writeMeta(meta dataFetchMeta) {
+func writeMeta(filepath string, meta dataFetchMeta) {
 	fmt.Println("Writing meta")
 
 	metaJSON, err := json.MarshalIndent(&meta, "", "  ")
 	check(err)
 
-	err = ioutil.WriteFile(metaFilePath, metaJSON, 0644)
+	err = ioutil.WriteFile(filepath, metaJSON, 0644)
 	check(err)
 
 	fmt.Println("  -> done")
 }
 
-func downloadDbDump(meta *dataFetchMeta) bool {
+func downloadDbDump(filepath string, meta *dataFetchMeta) bool {
 	fmt.Println("Downloading db")
 
 	req, err := http.NewRequest("GET", dbDumpURL, nil)
@@ -99,7 +98,7 @@ func downloadDbDump(meta *dataFetchMeta) bool {
 	check(err)
 
 	fmt.Println("  -> writing to disk")
-	err = ioutil.WriteFile(dbDumpFilePath, body, 0644)
+	err = ioutil.WriteFile(filepath, body, 0644)
 	check(err)
 	meta.SavedAt = time.Now().UTC()
 
@@ -111,12 +110,12 @@ func downloadDbDump(meta *dataFetchMeta) bool {
 	return true
 }
 
-func parseDbDump(meta *dataFetchMeta) []model.Game {
+func parseDbDump(filepath string, meta *dataFetchMeta) []model.Game {
 	fmt.Println("Parsing db")
 
 	var data model.DumpDb
 
-	s, err := ioutil.ReadFile(dbDumpFilePath)
+	s, err := ioutil.ReadFile(filepath)
 	check(err)
 
 	json.Unmarshal(s, &data)
@@ -134,13 +133,13 @@ func parseDbDump(meta *dataFetchMeta) []model.Game {
 	return result
 }
 
-func saveParsedDump(parsed []model.Game) {
+func saveParsedDump(filepath string, parsed []model.Game) {
 	fmt.Println("Saving parsed games")
 
 	r, err := json.Marshal(parsed)
 	check(err)
 
-	err = ioutil.WriteFile(parsedDumpFilePath, r, 0644)
+	err = ioutil.WriteFile(filepath, r, 0644)
 	check(err)
 
 	fmt.Println("  -> done")
@@ -155,17 +154,36 @@ func updateGames(meta *dataFetchMeta, games []model.Game) {
 	fmt.Println("  -> not implemented yet")
 }
 
-func Run() {
-	cachedMeta := readMeta()
+func createOutDirIfNeeded(outDir string) {
+	fmt.Println("Checking for out dir")
+
+	info, err := os.Stat(outDir)
+	if os.IsNotExist(err) {
+		fmt.Println("  -> doesnt exist, creating")
+		check(os.MkdirAll(outDir, 0755))
+	} else if !info.IsDir() {
+		check(fmt.Errorf("not a directory [%s]", outDir))
+	}
+	fmt.Println("  -> done")
+}
+
+func Run(outDir string) {
+	metaPath := outDir + "/" + metaFilePath
+	dbDumpPath := outDir + "/" + dbDumpFilePath
+	parsedDumpPath := outDir + "/" + parsedDumpFilePath
+
+	createOutDirIfNeeded(outDir)
+
+	cachedMeta := readMeta(metaPath)
 
 	currentMeta := cachedMeta
 	currentMeta.RanAt = time.Now().UTC()
 
-	if downloadDbDump(&currentMeta) {
-		games := parseDbDump(&currentMeta)
+	if downloadDbDump(dbDumpPath, &currentMeta) {
+		games := parseDbDump(dbDumpPath, &currentMeta)
 		updateGames(&currentMeta, games)
-		saveParsedDump(games)
+		saveParsedDump(parsedDumpPath, games)
 	}
 
-	writeMeta(currentMeta)
+	writeMeta(metaPath, currentMeta)
 }

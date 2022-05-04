@@ -22,7 +22,7 @@ One of the primary goals of this project is to be able to run on a free heroku d
 
 I like to then run `heroku logs -t --app={name-of-heroku-app}` to make sure the deploy was successful. You should now be able to hit `https://{name-of-heroku-app}.herokuapp.com/Games/ByIds?ids=1` to test.
 
-You can see an example instance running at https://demo-gamesdbmirror.herokuapp.com/Games/ByIds?ids=1
+You can see an example instance running at https://gamesdb-mirror.radreichley.com/Games/ByIds?ids=1
 
 ## Architecture
 

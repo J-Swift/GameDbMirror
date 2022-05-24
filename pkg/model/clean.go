@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+type CleanDB struct {
+	Games         []Game
+	ImageBaseUrls map[string]string
+}
+
 type Game struct {
 	ID             int
 	Title          string

@@ -30,7 +30,7 @@ type dataFetchMeta struct {
 
 func newMeta() dataFetchMeta {
 	return dataFetchMeta{
-		Version: 1,
+		Version: 2,
 	}
 }
 
@@ -110,7 +110,7 @@ func downloadDbDump(filepath string, meta *dataFetchMeta) bool {
 	return true
 }
 
-func parseDbDump(filepath string, meta *dataFetchMeta) []model.Game {
+func parseDbDump(filepath string, meta *dataFetchMeta) model.CleanDB {
 	fmt.Println("Parsing db")
 
 	var data model.DumpDb
@@ -120,9 +120,12 @@ func parseDbDump(filepath string, meta *dataFetchMeta) []model.Game {
 
 	json.Unmarshal(s, &data)
 
-	result := make([]model.Game, len(data.Data.Games))
+	result := model.CleanDB{
+		ImageBaseUrls: data.Include.Images.BaseUrls,
+	}
+	result.Games = make([]model.Game, len(data.Data.Games))
 	for i, g := range data.Data.Games {
-		result[i] = model.NewGame(&data, &g)
+		result.Games[i] = model.NewGame(&data, &g)
 	}
 
 	lastEditID := data.LastEditID
@@ -133,7 +136,7 @@ func parseDbDump(filepath string, meta *dataFetchMeta) []model.Game {
 	return result
 }
 
-func saveParsedDump(filepath string, parsed []model.Game) {
+func saveParsedDump(filepath string, parsed model.CleanDB) {
 	fmt.Println("Saving parsed games")
 
 	r, err := json.Marshal(parsed)
@@ -180,9 +183,9 @@ func Run(outDir string) {
 	currentMeta.RanAt = time.Now().UTC()
 
 	if downloadDbDump(dbDumpPath, &currentMeta) {
-		games := parseDbDump(dbDumpPath, &currentMeta)
-		updateGames(&currentMeta, games)
-		saveParsedDump(parsedDumpPath, games)
+		cleanDb := parseDbDump(dbDumpPath, &currentMeta)
+		updateGames(&currentMeta, cleanDb.Games)
+		saveParsedDump(parsedDumpPath, cleanDb)
 	}
 
 	writeMeta(metaPath, currentMeta)

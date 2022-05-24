@@ -20,11 +20,18 @@ const (
 )
 
 var db *repo.Repo
+var baseUrls map[string]string
+
+type GamesResult struct {
+	Games         []model.Game
+	ImageBaseUrls map[string]string
+}
 
 func prepare(dataDir string) {
 	filepath := dataDir + "/" + parsedDumpFilePath
-	games := parse(filepath)
-	db = repo.New(games)
+	cleanDb := parse(filepath)
+	db = repo.New(cleanDb.Games)
+	baseUrls = cleanDb.ImageBaseUrls
 }
 
 func check(e error) {
@@ -33,16 +40,16 @@ func check(e error) {
 	}
 }
 
-func parse(dataFilepath string) []model.Game {
+func parse(dataFilepath string) model.CleanDB {
 	fmt.Println("Parsing games")
 
-	cachedGames, err := ioutil.ReadFile(dataFilepath)
+	cachedDb, err := ioutil.ReadFile(dataFilepath)
 	check(err)
 
-	var result []model.Game
-	json.Unmarshal(cachedGames, &result)
+	var result model.CleanDB
+	json.Unmarshal(cachedDb, &result)
 
-	fmt.Printf("  -> parsed [%d] games\n", len(result))
+	fmt.Printf("  -> parsed [%d] games\n", len(result.Games))
 	fmt.Println("  -> done")
 	return result
 }
@@ -58,7 +65,7 @@ func getIds(str string) []int {
 
 func getInsensitive(params url.Values, key string) string {
 	for k, vs := range params {
-		if strings.ToLower(k) == strings.ToLower(key) {
+		if strings.EqualFold(k, key) {
 			if len(vs) == 0 {
 				return ""
 			}
@@ -75,7 +82,7 @@ func handleFindByName(maxResults int) func(http.ResponseWriter, *http.Request) {
 
 		games := db.FindGamesByTitle(name, maxResults)
 
-		json.NewEncoder(w).Encode(games)
+		json.NewEncoder(w).Encode(GamesResult{Games: games, ImageBaseUrls: baseUrls})
 	})
 }
 
@@ -86,7 +93,7 @@ func handleFindByID(maxResults int) func(http.ResponseWriter, *http.Request) {
 		ids := getIds(qIds)
 		games := db.FindGamesByID(ids, maxResults)
 
-		json.NewEncoder(w).Encode(games)
+		json.NewEncoder(w).Encode(GamesResult{Games: games, ImageBaseUrls: baseUrls})
 	})
 }
 

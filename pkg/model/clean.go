@@ -20,6 +20,7 @@ type Game struct {
 	PublisherIDS   []int
 	AlternateNames []string
 	Uids           []uidType
+	Images         []image
 }
 
 type platform struct {
@@ -28,17 +29,27 @@ type platform struct {
 	Alias string
 }
 
+type image struct {
+	Id         int
+	Type       string
+	Side       NullString
+	Filename   string
+	Resolution NullString
+}
+
 type uidType struct {
 	UID                 string
 	GamesUidsPatternsID int
 }
 
 func NewGame(db *DumpDb, source *DumpGame) Game {
-	lookup := db.Include.Platform.Data[strconv.Itoa(source.PlatformID)]
+	platLookup := db.Include.Platform.ByGameId[strconv.Itoa(source.PlatformID)]
+	imagesLookup, foundImages := db.Include.Images.ByGameId[strconv.Itoa(source.ID)]
+
 	plat := platform{
-		ID:    lookup.ID,
-		Name:  lookup.Name,
-		Alias: lookup.Alias,
+		ID:    platLookup.ID,
+		Name:  platLookup.Name,
+		Alias: platLookup.Alias,
 	}
 
 	dids := []int{}
@@ -63,6 +74,27 @@ func NewGame(db *DumpDb, source *DumpGame) Game {
 			uids = append(uids, uidType{
 				UID:                 uid.UID,
 				GamesUidsPatternsID: uid.GamesUidsPatternsID,
+			})
+		}
+	}
+
+	images := []image{}
+	if foundImages {
+		for _, img := range imagesLookup {
+			var side NullString
+			if img.Side != nil && *img.Side != "" {
+				side = NullString{*img.Side, true}
+			}
+			var resolution NullString
+			if img.Resolution != nil && *img.Resolution != "" {
+				resolution = NullString{*img.Resolution, true}
+			}
+			images = append(images, image{
+				Id:         img.Id,
+				Type:       img.Type,
+				Side:       side,
+				Filename:   img.Filename,
+				Resolution: resolution,
 			})
 		}
 	}
@@ -103,5 +135,6 @@ func NewGame(db *DumpDb, source *DumpGame) Game {
 		PublisherIDS:   pids,
 		AlternateNames: alts,
 		Uids:           uids,
+		Images:         images,
 	}
 }

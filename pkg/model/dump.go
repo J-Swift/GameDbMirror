@@ -16,16 +16,32 @@ type DumpDb struct {
 
 type DumpIncludes struct {
 	Platform DumpPlatformsData `json:"platform"`
+	Images   DumpImagesData    `json:"boxart"`
 }
 
 type DumpPlatformsData struct {
-	Data map[string]DumpPlatform `json:"data"`
+	ByGameId map[string]DumpPlatform `json:"data"`
 }
 
 type DumpPlatform struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
 	Alias string `json:"alias"`
+}
+
+// Images
+
+type DumpImagesData struct {
+	BaseUrls map[string]string      `json:"base_url"`
+	ByGameId map[string][]DumpImage `json:"data"`
+}
+
+type DumpImage struct {
+	Id         int     `json:"id"`
+	Type       string  `json:"type"`
+	Side       *string `json:"side"`
+	Filename   string  `json:"filename"`
+	Resolution *string `json:"resolution"`
 }
 
 // Games

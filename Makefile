@@ -1,6 +1,9 @@
 MAKEFLAGS += --silent
 PORT := 5000
 
+DOCKER_IMG_TAG_FETCH = gamesdb-fetch
+DOCKER_IMG_TAG_SERVER = gamesdb-server
+
 all: clean compile-all
 
 serve:
@@ -60,19 +63,19 @@ DOCKER_RUN := docker run -it --rm -v $(shell pwd)/.fetch-cache:/.fetch-cache
 DOCKER_BUILD := docker build
 
 docker-run-server:
-	$(DOCKER_RUN) -p $(PORT):$(PORT) -e PORT=$(PORT) gamesdb-server
+	$(DOCKER_RUN) -p $(PORT):$(PORT) -e PORT=$(PORT) $(DOCKER_IMG_TAG_SERVER)
 .PHONY: docker-run-server
 
 docker-run-fetch:
-	$(DOCKER_RUN) gamesdb-fetch
+	$(DOCKER_RUN) $(DOCKER_IMG_TAG_FETCH)
 .PHONY: docker-run-fetch
 
 docker-build-server:
-	$(DOCKER_BUILD) . -t gamesdb-server -f Dockerfile.web
+	$(DOCKER_BUILD) . -t $(DOCKER_IMG_TAG_SERVER) -f Dockerfile.web
 .PHONY: docker-build-server
 
 docker-build-fetch:
-	$(DOCKER_BUILD) . -t gamesdb-fetch -f Dockerfile.fetch
+	$(DOCKER_BUILD) . -t $(DOCKER_IMG_TAG_FETCH) -f Dockerfile.fetch
 .PHONY: docker-build-fetch
 
 

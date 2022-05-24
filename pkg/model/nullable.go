@@ -40,7 +40,7 @@ func (nb *NullBool) UnmarshalJSON(data []byte) error {
 }
 
 func (ns *NullString) MarshalJSON() ([]byte, error) {
-	if !ns.Valid {
+	if !ns.Valid || ns.String == "" {
 		return []byte("null"), nil
 	}
 	return json.Marshal(ns.String)

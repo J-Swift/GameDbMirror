@@ -5,9 +5,8 @@ This is intended to be an easy-to-run solution for mirroring the data served by 
 ## Getting started
 
 ```sh
-make
-./out/fetch # NOTE: must be run at least once before running the server
-./out/server
+make fetch # NOTE: must be run at least once before running the server
+make serve
 
 # test that it works with
 #     curl 'http://localhost:5000/Games/ByIds?ids=1'

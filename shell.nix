@@ -4,6 +4,6 @@ pkgs.mkShell {
   buildInputs = [
     pkgs.nixpkgs-fmt
 
-    pkgs.go_1_16
+    pkgs.go_1_18
   ];
 }

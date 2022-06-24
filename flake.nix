@@ -1,6 +1,5 @@
 {
   description = "GamesDB mirror in go";
-  nixConfig.bash-prompt = "flake:gamesdb-mirror $ ";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";

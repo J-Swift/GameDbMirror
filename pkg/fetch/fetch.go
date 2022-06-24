@@ -1,11 +1,13 @@
 package fetch
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/J-Swift/GamesDbMirror-go/pkg/model"
@@ -19,6 +21,15 @@ const (
 	dbDumpURL = "https://cdn.thegamesdb.net/json/database-latest.json"
 )
 
+//go:embed data/genres.json
+var genresBytes []byte
+
+//go:embed data/developers.json
+var developersBytes []byte
+
+//go:embed data/publishers.json
+var publishersBytes []byte
+
 type dataFetchMeta struct {
 	Version          int
 	RanAt            time.Time
@@ -30,7 +41,7 @@ type dataFetchMeta struct {
 
 func newMeta() dataFetchMeta {
 	return dataFetchMeta{
-		Version: 2,
+		Version: 4,
 	}
 }
 
@@ -113,6 +124,16 @@ func downloadDbDump(filepath string, meta *dataFetchMeta) bool {
 func parseDbDump(filepath string, meta *dataFetchMeta) model.CleanDB {
 	fmt.Println("Parsing db")
 
+	var genres model.Genres
+	check(json.Unmarshal(genresBytes, &genres))
+	intGenres := stringToIntMap(genres.Data.Genres)
+	var developers model.Developers
+	check(json.Unmarshal(developersBytes, &developers))
+	intDevelopers := stringToIntMap(developers.Data.Developers)
+	var publishers model.Publishers
+	check(json.Unmarshal(publishersBytes, &publishers))
+	intPublishers := stringToIntMap(developers.Data.Developers)
+
 	var data model.DumpDb
 
 	s, err := ioutil.ReadFile(filepath)
@@ -125,7 +146,7 @@ func parseDbDump(filepath string, meta *dataFetchMeta) model.CleanDB {
 	}
 	result.Games = make([]model.Game, len(data.Data.Games))
 	for i, g := range data.Data.Games {
-		result.Games[i] = model.NewGame(&data, &g)
+		result.Games[i] = model.NewGame(&data, &g, intGenres, intDevelopers, intPublishers)
 	}
 
 	lastEditID := data.LastEditID
@@ -168,6 +189,18 @@ func createOutDirIfNeeded(outDir string) {
 		check(fmt.Errorf("not a directory [%s]", outDir))
 	}
 	fmt.Println("  -> done")
+}
+
+func stringToIntMap(data model.StrLookupItems) model.IntLookupItems {
+	res := make(model.IntLookupItems)
+
+	for k, v := range data {
+		iKey, err := strconv.Atoi(k)
+		check(err)
+		res[iKey] = v
+	}
+
+	return res
 }
 
 func Run(outDir string) {

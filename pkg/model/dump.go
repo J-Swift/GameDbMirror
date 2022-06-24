@@ -91,3 +91,39 @@ func (sd *DumpGamesDbDate) UnmarshalJSON(input []byte) error {
 func (sd *DumpGamesDbDate) MarshalJSON() ([]byte, error) {
 	return json.Marshal(sd.Format("2006-01-02"))
 }
+
+// baked data
+
+type LookupItem struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type StrLookupItems map[string]LookupItem
+
+type GenresData struct {
+	Genres StrLookupItems `json:"genres"`
+}
+type Genres struct {
+	Code   int        `json:"code"`
+	Status string     `json:"status"`
+	Data   GenresData `json:"data"`
+}
+
+type DevelopersData struct {
+	Developers StrLookupItems `json:"developers"`
+}
+type Developers struct {
+	Code   int            `json:"code"`
+	Status string         `json:"status"`
+	Data   DevelopersData `json:"data"`
+}
+
+type PublishersData struct {
+	Publishers StrLookupItems `json:"publishers"`
+}
+type Publishers struct {
+	Code   int            `json:"code"`
+	Status string         `json:"status"`
+	Data   PublishersData `json:"data"`
+}

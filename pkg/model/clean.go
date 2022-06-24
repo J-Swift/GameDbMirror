@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -20,9 +21,9 @@ type Game struct {
 	Players        NullInt
 	IsCoop         NullBool
 	Rating         NullString
-	DeveloperIDS   []int
-	GenreIDS       []int
-	PublisherIDS   []int
+	Developers     []LookupItem
+	Genres         []LookupItem
+	Publishers     []LookupItem
 	AlternateNames []string
 	Uids           []uidType
 	Images         []image
@@ -33,6 +34,8 @@ type platform struct {
 	Name  string
 	Alias string
 }
+
+type IntLookupItems map[int]LookupItem
 
 type image struct {
 	Id         int
@@ -47,7 +50,7 @@ type uidType struct {
 	GamesUidsPatternsID int
 }
 
-func NewGame(db *DumpDb, source *DumpGame) Game {
+func NewGame(db *DumpDb, source *DumpGame, genres IntLookupItems, developers IntLookupItems, publishers IntLookupItems) Game {
 	platLookup := db.Include.Platform.ByGameId[strconv.Itoa(source.PlatformID)]
 	imagesLookup, foundImages := db.Include.Images.ByGameId[strconv.Itoa(source.ID)]
 
@@ -57,17 +60,38 @@ func NewGame(db *DumpDb, source *DumpGame) Game {
 		Alias: platLookup.Alias,
 	}
 
-	dids := []int{}
+	dids := make([]LookupItem, 0)
 	if source.DeveloperIDS != nil {
-		dids = *source.DeveloperIDS
+		for _, did := range *source.DeveloperIDS {
+			item, found := developers[did]
+			if !found {
+				fmt.Printf("WARN: developer not found [%d]\n", did)
+			} else {
+				dids = append(dids, item)
+			}
+		}
 	}
-	gids := []int{}
+	gids := make([]LookupItem, 0)
 	if source.GenreIDS != nil {
-		gids = *source.GenreIDS
+		for _, gid := range *source.GenreIDS {
+			item, found := genres[gid]
+			if !found {
+				fmt.Printf("WARN: genre not found [%d]\n", gid)
+			} else {
+				gids = append(gids, item)
+			}
+		}
 	}
-	pids := []int{}
+	pids := make([]LookupItem, 0)
 	if source.PublisherIDS != nil {
-		pids = *source.PublisherIDS
+		for _, pid := range *source.PublisherIDS {
+			item, found := publishers[pid]
+			if !found {
+				fmt.Printf("WARN: publisher not found [%d]\n", pid)
+			} else {
+				pids = append(pids, item)
+			}
+		}
 	}
 	alts := []string{}
 	if source.Alternatives != nil {
@@ -135,9 +159,9 @@ func NewGame(db *DumpDb, source *DumpGame) Game {
 		Players:        ps,
 		IsCoop:         co,
 		Rating:         rt,
-		DeveloperIDS:   dids,
-		GenreIDS:       gids,
-		PublisherIDS:   pids,
+		Developers:     dids,
+		Genres:         gids,
+		Publishers:     pids,
 		AlternateNames: alts,
 		Uids:           uids,
 		Images:         images,
